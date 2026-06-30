@@ -57,10 +57,12 @@ class AtsJsonAdapter(BaseAdapter):
                     logger.warning("ingest", self.source_name, f"Skipping non-dict item at index {i}")
             return records if records else [self._empty_record_with_error("No valid candidates in JSON array")]
         elif isinstance(data, dict):
-            # Could be a single candidate or a wrapper with a "candidates" key
+            # Unwrap a top-level 'candidate' or 'candidates' wrapper if present
             if "candidates" in data and isinstance(data["candidates"], list):
                 records = [self._parse_candidate(c) for c in data["candidates"] if isinstance(c, dict)]
                 return records if records else [self._empty_record_with_error("No valid candidates")]
+            elif "candidate" in data and isinstance(data["candidate"], dict):
+                return [self._parse_candidate(data["candidate"])]
             else:
                 return [self._parse_candidate(data)]
         else:
@@ -108,12 +110,23 @@ class AtsJsonAdapter(BaseAdapter):
             except (ValueError, TypeError):
                 record.errors.append(f"Invalid years_experience: {yoe}")
 
-        # Skills
-        skills = data.get("skills") or []
-        if isinstance(skills, list):
-            record.skills = [str(s).strip() for s in skills if s]
-        elif isinstance(skills, str):
-            record.skills = [s.strip() for s in skills.split(",") if s.strip()]
+        # Skills — handle both a flat list and a nested dict of categories
+        # e.g. {"languages": [...], "core": [...], "tools": [...]}
+        skills_raw = data.get("skills") or data.get("skill_list") or []
+        all_skills = []
+        if isinstance(skills_raw, list):
+            all_skills = [str(s).strip() for s in skills_raw if s]
+        elif isinstance(skills_raw, str):
+            all_skills = [s.strip() for s in skills_raw.split(",") if s.strip()]
+        elif isinstance(skills_raw, dict):
+            # Flatten all sub-categories into one list
+            for category_items in skills_raw.values():
+                if isinstance(category_items, list):
+                    all_skills.extend([str(s).strip() for s in category_items if s])
+                elif isinstance(category_items, str):
+                    all_skills.append(category_items.strip())
+        if all_skills:
+            record.skills = all_skills
 
         # Links
         links = data.get("links") or {}

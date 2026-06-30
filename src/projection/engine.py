@@ -84,18 +84,27 @@ def project(profile, config):
             else:
                 output[path] = value
 
-    # Handle provenance toggle
-    if not include_provenance and "provenance" in output:
-        del output["provenance"]
-    if not include_provenance:
-        # Also strip provenance from nested objects
-        _strip_nested_field(output, "source")
+    # ── Post-projection: inject or strip confidence & provenance ──
+    #
+    # When a custom `fields` list is provided, only those fields are projected.
+    # If the user also sets include_confidence=true or include_provenance=true,
+    # we must explicitly inject those values — they are NOT in the fields list.
+    # Conversely, when include_*=false, we strip them from wherever they ended up.
 
-    # Handle confidence toggle
-    if not include_confidence:
-        if "overall_confidence" in output:
-            del output["overall_confidence"]
-        _strip_nested_field(output, "confidence")
+    if fields:
+        # Custom fields mode: inject if requested
+        if include_confidence:
+            output["overall_confidence"] = profile_dict.get("overall_confidence")
+        if include_provenance:
+            output["provenance"] = profile_dict.get("provenance", [])
+    else:
+        # Full emit mode: strip if not requested
+        if not include_provenance:
+            output.pop("provenance", None)
+            _strip_nested_field(output, "source")
+        if not include_confidence:
+            output.pop("overall_confidence", None)
+            _strip_nested_field(output, "confidence")
 
     logger.info("projection", "", f"Projected {len(output)} fields")
     return output

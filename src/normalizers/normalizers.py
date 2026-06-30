@@ -391,7 +391,10 @@ def normalize_experience(raw_exp):
         "start_date": start_date,
         "end_date": end_date,
         "is_current": is_current,
-        "description": raw_exp.get("description", "").strip(),
+        "description": (
+            " ".join(raw_exp["description"]) if isinstance(raw_exp.get("description"), list)
+            else (raw_exp.get("description") or "").strip()
+        ),
     }
 
 

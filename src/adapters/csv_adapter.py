@@ -112,10 +112,16 @@ class CsvAdapter(BaseAdapter):
             except ValueError:
                 record.errors.append(f"Invalid years_experience: {yoe}")
 
-        # Skills
-        skills = mapped.get("skills") or mapped.get("skill_list") or ""
-        if skills:
-            record.skills = [s.strip() for s in skills.split(",") if s.strip()]
+        # Skills — support multiple common column names
+        # Collect from all skill-related columns and merge them
+        skill_columns = ["skills", "skill_list", "core_skills", "technical_skills", "languages", "tools"]
+        all_skills = []
+        for col in skill_columns:
+            raw = mapped.get(col, "")
+            if raw:
+                all_skills.extend([s.strip() for s in raw.replace("|", ",").split(",") if s.strip()])
+        if all_skills:
+            record.skills = all_skills
 
         # Links
         github = mapped.get("github") or mapped.get("github_url") or ""

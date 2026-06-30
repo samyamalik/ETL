@@ -1,6 +1,7 @@
 # Core
 pyyaml>=6.0
 phonenumbers>=8.13
+streamlit>=1.35
 
 # PDF parsing
 pdfplumber>=0.10
