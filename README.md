@@ -26,7 +26,8 @@ pip install -r requirements.txt
 streamlit run app.py
 
 # 4. Or run the CLI with sample data
-python main.py --demo --config output_configs/custom.json
+python main.py --csv path/to/file.csv --notes path/to/notes.txt --json path/to/ats.json --config output_configs/custom.json
+
 ```
 
 ## Architecture
