@@ -63,8 +63,8 @@ class PdfAdapter(BaseAdapter):
         email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
         record.emails = list(set(re.findall(email_pattern, text)))
 
-        # Extract phone numbers
-        phone_pattern = r'[\+]?[\d\s\-\(\)]{7,15}'
+        # Extract phone numbers with strict boundary guards
+        phone_pattern = r'(?:^|[\s,;:\.])([\+]?[\d\s\-\(\)]{7,15})(?:[\s,;:\.]|$)'
         raw_phones = re.findall(phone_pattern, text)
         record.phones = [p.strip() for p in raw_phones if len(re.sub(r'\D', '', p)) >= 7]
 
@@ -97,19 +97,71 @@ class PdfAdapter(BaseAdapter):
             skills = re.split(r'[,|•·\n]', skills_text)
             record.skills = [s.strip() for s in skills if s.strip() and len(s.strip()) < 50]
 
-        # Extract location — look for common patterns
-        location_patterns = [
-            r'(?:location|address|city)[:\s]*([^\n]+)',
-            r'([A-Z][a-z]+(?:\s[A-Z][a-z]+)*,\s*[A-Z]{2})',  # City, ST
-            r'([A-Z][a-z]+(?:\s[A-Z][a-z]+)*,\s*[A-Z][a-z]+(?:\s[A-Z][a-z]+)*)',  # City, State/Country
-        ]
-        for pattern in location_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                record.location = match.group(1).strip()
-                break
+        # Extract location — use strict matching to avoid catching sentences
+        record.location = self._extract_location(text)
 
         return record
+
+    def _extract_location(self, text):
+        """
+        Extract location strictly. Uses multiple strategies in priority order:
+        1. Explicit label (e.g. 'Location: ...' or 'Address: ...')
+        2. Known Indian city/state patterns (case-insensitive, line-by-line)
+        3. Strict proper-noun City, State regex (NO IGNORECASE to avoid sentence matches)
+        Never returns a location string longer than 60 chars.
+        """
+        INDIAN_CITIES = {
+            "mumbai", "delhi", "bengaluru", "bangalore", "hyderabad", "chennai",
+            "kolkata", "pune", "ahmedabad", "jaipur", "lucknow", "kanpur",
+            "nagpur", "indore", "bhopal", "visakhapatnam", "patna", "vadodara",
+            "ghaziabad", "ludhiana", "agra", "nashik", "faridabad", "meerut",
+            "surat", "noida", "gurugram", "gurgaon", "chandigarh", "coimbatore",
+            "kochi", "mangaluru", "mysuru", "mysore", "trichy", "bhubaneswar",
+        }
+        INDIAN_STATES = {
+            "uttar pradesh", "maharashtra", "karnataka", "tamil nadu", "gujarat",
+            "rajasthan", "west bengal", "madhya pradesh", "bihar", "andhra pradesh",
+            "telangana", "odisha", "kerala", "jharkhand", "assam", "punjab",
+            "haryana", "chhattisgarh", "uttarakhand", "himachal pradesh", "delhi",
+        }
+
+        lines = [l.strip() for l in text.split("\n") if l.strip()]
+
+        # Strategy 1: Explicit label on a line
+        for line in lines:
+            m = re.match(r'(?:location|address|city)[:\s]+(.+)', line, re.IGNORECASE)
+            if m:
+                val = m.group(1).strip()
+                if len(val) <= 60:
+                    return val
+
+        # Strategy 2: Line-by-line Indian city detection
+        for line in lines:
+            lower = line.lower()
+            for city in INDIAN_CITIES:
+                if city in lower and len(line) <= 60:
+                    return line.strip()
+
+        # Strategy 3: Strict proper-noun City, State (NO IGNORECASE)
+        strict_patterns = [
+            r'\b([A-Z][a-z]{2,}(?:\s[A-Z][a-z]+)*,\s*[A-Z][a-z]{3,}(?:\s[A-Z][a-z]+)*)\b',  # City, State
+            r'\b([A-Z][a-z]{2,}(?:\s[A-Z][a-z]+)*,\s*[A-Z]{2})\b',  # City, ST
+        ]
+        for pattern in strict_patterns:
+            m = re.search(pattern, text)  # No IGNORECASE — sentences are lowercase
+            if m:
+                val = m.group(1).strip()
+                lower_val = val.lower()
+                # Reject if it looks like a sentence (contains common English words)
+                sentence_words = {"the", "and", "with", "for", "from", "that", "this",
+                                  "have", "been", "will", "are", "was", "were", "has"}
+                words = set(lower_val.split())
+                if words & sentence_words:
+                    continue
+                if len(val) <= 60:
+                    return val
+
+        return None
 
     def _extract_section(self, text, section_names):
         """Extract text from a named section of the resume."""

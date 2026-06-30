@@ -97,14 +97,15 @@ def project(profile, config):
             output["overall_confidence"] = profile_dict.get("overall_confidence")
         if include_provenance:
             output["provenance"] = profile_dict.get("provenance", [])
-    else:
-        # Full emit mode: strip if not requested
-        if not include_provenance:
-            output.pop("provenance", None)
-            _strip_nested_field(output, "source")
-        if not include_confidence:
-            output.pop("overall_confidence", None)
-            _strip_nested_field(output, "confidence")
+
+    # Always strip if flags are false (covers both full emit mode and custom fields mode
+    # where nested objects like emails might have been explicitly requested and mapped)
+    if not include_provenance:
+        output.pop("provenance", None)
+        _strip_nested_field(output, "source")
+    if not include_confidence:
+        output.pop("overall_confidence", None)
+        _strip_nested_field(output, "confidence")
 
     logger.info("projection", "", f"Projected {len(output)} fields")
     return output

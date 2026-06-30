@@ -31,16 +31,26 @@ from src.validation.validator import validate_output
 from src.errors import ErrorCollector, ConfigError
 from src.logger import logger
 
+import os
+from dotenv import load_dotenv
 
 def create_default_registry():
     """Create and return a registry with all default adapters."""
+    
+    # Automatically load API tokens from .env file into environment variables
+    load_dotenv()
+    
     registry = AdapterRegistry()
     registry.register(CsvAdapter())
     registry.register(AtsJsonAdapter())
     registry.register(PdfAdapter())
     registry.register(DocxAdapter())
     registry.register(TxtAdapter())
-    registry.register(GithubAdapter())
+    
+    # Check for GitHub token in environment to increase rate limit from 60 to 5000/hr
+    gh_token = os.environ.get("GITHUB_TOKEN")
+    registry.register(GithubAdapter(api_token=gh_token))
+    
     return registry
 
 
@@ -147,13 +157,13 @@ def process_candidate(sources, output_config=None, registry=None):
     logger.info("pipeline", "", "Merging records")
     profile = merge_records(all_records)
 
-    # ── Step 4: Score ──
-    logger.info("pipeline", "", "Scoring confidence")
-    profile = score_profile(profile, all_records)
-
-    # ── Step 5: Provenance ──
+    # ── Step 4: Provenance ──
     logger.info("pipeline", "", "Tracking provenance")
     profile = track_provenance(profile, all_records)
+
+    # ── Step 5: Score ──
+    logger.info("pipeline", "", "Scoring confidence")
+    profile = score_profile(profile, all_records)
 
     logger.set_candidate_id(profile.candidate_id)
 

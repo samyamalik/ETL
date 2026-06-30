@@ -75,21 +75,30 @@ class AtsJsonAdapter(BaseAdapter):
             extraction_method="structured",
         )
 
-        record.full_name = self._safe_str(data, "full_name") or self._safe_str(data, "name")
+        # Name — try multiple common ATS key names
+        record.full_name = (
+            self._safe_str(data, "full_name")
+            or self._safe_str(data, "name")
+            or self._safe_str(data, "candidateName")
+            or self._safe_str(data, "candidate_name")
+        )
 
-        # Emails — could be string or list
-        emails = data.get("emails") or data.get("email")
-        if isinstance(emails, str):
-            record.emails = [emails.strip()] if emails.strip() else []
-        elif isinstance(emails, list):
-            record.emails = [str(e).strip() for e in emails if e]
-        
-        # Phones
-        phones = data.get("phones") or data.get("phone")
-        if isinstance(phones, str):
-            record.phones = [phones.strip()] if phones.strip() else []
-        elif isinstance(phones, list):
-            record.phones = [str(p).strip() for p in phones if p]
+        # Contact block — many ATS systems nest email/phone under a 'contact' key
+        contact = data.get("contact") or {}
+
+        # Emails — could be string or list, top-level or inside 'contact'
+        emails_raw = data.get("emails") or data.get("email") or contact.get("emails") or contact.get("email")
+        if isinstance(emails_raw, str):
+            record.emails = [emails_raw.strip()] if emails_raw.strip() else []
+        elif isinstance(emails_raw, list):
+            record.emails = [str(e).strip() for e in emails_raw if e]
+
+        # Phones — top-level or inside 'contact'
+        phones_raw = data.get("phones") or data.get("phone") or contact.get("phones") or contact.get("phone")
+        if isinstance(phones_raw, str):
+            record.phones = [phones_raw.strip()] if phones_raw.strip() else []
+        elif isinstance(phones_raw, list):
+            record.phones = [str(p).strip() for p in phones_raw if p]
 
         # Location
         loc = data.get("location")
@@ -99,11 +108,21 @@ class AtsJsonAdapter(BaseAdapter):
             parts = [loc.get("city", ""), loc.get("state", ""), loc.get("country", "")]
             record.location = ", ".join(p for p in parts if p)
 
-        # Headline
-        record.headline = self._safe_str(data, "headline") or self._safe_str(data, "title")
+        # Headline — try currentRole, current_role, title, headline
+        record.headline = (
+            self._safe_str(data, "headline")
+            or self._safe_str(data, "title")
+            or self._safe_str(data, "currentRole")
+            or self._safe_str(data, "current_role")
+        )
 
-        # Years experience
-        yoe = data.get("years_experience") or data.get("experience_years")
+        # Years experience — try multiple keys
+        yoe = (
+            data.get("years_experience")
+            or data.get("experience_years")
+            or data.get("yearsExperience")
+            or data.get("total_experience")
+        )
         if yoe is not None:
             try:
                 record.years_experience = float(yoe)
@@ -128,26 +147,33 @@ class AtsJsonAdapter(BaseAdapter):
         if all_skills:
             record.skills = all_skills
 
-        # Links
+        # Links — top-level or nested under 'contact'
         links = data.get("links") or {}
         if isinstance(links, dict):
             record.links = {k: str(v) for k, v in links.items() if v}
-        github = data.get("github") or data.get("github_url")
+        # Also check top-level and contact-level GitHub / LinkedIn
+        github = data.get("github") or data.get("github_url") or contact.get("github") or contact.get("github_url")
         if github:
             record.links["github"] = str(github)
+        linkedin = data.get("linkedin") or data.get("linkedin_url") or contact.get("linkedin") or contact.get("linkedin_url")
+        if linkedin:
+            record.links["linkedin"] = str(linkedin)
 
-        # Experience
-        exp_list = data.get("experience") or []
+        # Experience — support 'workExperience', start/end aliases, role, summary
+        exp_list = data.get("experience") or data.get("workExperience") or data.get("work_experience") or []
         if isinstance(exp_list, list):
             for exp in exp_list:
                 if isinstance(exp, dict):
                     record.experience.append({
                         "company": exp.get("company", ""),
-                        "title": exp.get("title", ""),
-                        "start_date": exp.get("start_date"),
-                        "end_date": exp.get("end_date"),
-                        "is_current": exp.get("is_current", False),
-                        "description": exp.get("description", ""),
+                        "title": exp.get("title", "") or exp.get("role", ""),
+                        "start_date": exp.get("start_date") or exp.get("start"),
+                        "end_date": exp.get("end_date") or exp.get("end"),
+                        "is_current": exp.get("is_current", exp.get("end") is None),
+                        "description": (
+                            " ".join(exp["description"]) if isinstance(exp.get("description"), list)
+                            else exp.get("description") or exp.get("summary") or ""
+                        ),
                     })
 
         # Education

@@ -108,10 +108,14 @@ def normalize_phone(raw_phone):
 
     phone = raw_phone.strip()
 
+    # Reject if it contains alphabetical characters
+    if re.search(r'[a-zA-Z]', phone):
+        return None
+
     # Try using phonenumbers library if available
     try:
         import phonenumbers
-        parsed = phonenumbers.parse(phone, "US")  # Default to US
+        parsed = phonenumbers.parse(phone, "IN")  # Default to India
         if phonenumbers.is_valid_number(parsed):
             return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
     except Exception:
@@ -127,7 +131,7 @@ def normalize_phone(raw_phone):
     if has_plus:
         return f"+{digits}"
     elif len(digits) == 10:
-        return f"+1{digits}"  # Assume US
+        return f"+91{digits}"  # Default to India (+91)
     else:
         return f"+{digits}"
 
@@ -151,28 +155,32 @@ def normalize_phone_list(raw_phones):
 #  LOCATION NORMALIZER
 # ──────────────────────────────────────────────
 
-# US state abbreviation map
-US_STATES = {
-    "al": "Alabama", "ak": "Alaska", "az": "Arizona", "ar": "Arkansas",
-    "ca": "California", "co": "Colorado", "ct": "Connecticut", "de": "Delaware",
-    "fl": "Florida", "ga": "Georgia", "hi": "Hawaii", "id": "Idaho",
-    "il": "Illinois", "in": "Indiana", "ia": "Iowa", "ks": "Kansas",
-    "ky": "Kentucky", "la": "Louisiana", "me": "Maine", "md": "Maryland",
-    "ma": "Massachusetts", "mi": "Michigan", "mn": "Minnesota", "ms": "Mississippi",
-    "mo": "Missouri", "mt": "Montana", "ne": "Nebraska", "nv": "Nevada",
-    "nh": "New Hampshire", "nj": "New Jersey", "nm": "New Mexico", "ny": "New York",
-    "nc": "North Carolina", "nd": "North Dakota", "oh": "Ohio", "ok": "Oklahoma",
-    "or": "Oregon", "pa": "Pennsylvania", "ri": "Rhode Island", "sc": "South Carolina",
-    "sd": "South Dakota", "tn": "Tennessee", "tx": "Texas", "ut": "Utah",
-    "vt": "Vermont", "va": "Virginia", "wa": "Washington", "wv": "West Virginia",
-    "wi": "Wisconsin", "wy": "Wyoming", "dc": "District of Columbia",
+# Indian state abbreviation map (default region)
+INDIAN_STATES = {
+    "ap": "Andhra Pradesh", "ar": "Arunachal Pradesh", "as": "Assam",
+    "br": "Bihar", "cg": "Chhattisgarh", "ga": "Goa", "gj": "Gujarat",
+    "hr": "Haryana", "hp": "Himachal Pradesh", "jk": "Jammu & Kashmir",
+    "jh": "Jharkhand", "ka": "Karnataka", "kl": "Kerala", "mp": "Madhya Pradesh",
+    "mh": "Maharashtra", "mn": "Manipur", "ml": "Meghalaya", "mz": "Mizoram",
+    "nl": "Nagaland", "od": "Odisha", "pb": "Punjab", "rj": "Rajasthan",
+    "sk": "Sikkim", "tn": "Tamil Nadu", "ts": "Telangana", "tr": "Tripura",
+    "up": "Uttar Pradesh", "uk": "Uttarakhand", "wb": "West Bengal",
+    "dl": "Delhi", "ch": "Chandigarh", "py": "Puducherry",
+}
+
+# Words that indicate the string is a sentence, not a city name
+_SENTENCE_WORDS = {
+    "the", "and", "with", "for", "from", "that", "this", "have", "been",
+    "will", "are", "was", "were", "has", "data", "strong", "foundation",
+    "engineer", "software", "systems", "management", "machine", "learning",
 }
 
 
 def normalize_location(raw_location):
     """
     Normalize a location string into {city, state, country}.
-    Returns a dict with city, state, country, raw.
+    Defaults to India for all ambiguous inputs.
+    Returns None if input looks like a sentence rather than a real location.
     """
     if not raw_location or not isinstance(raw_location, str):
         return None
@@ -183,34 +191,36 @@ def normalize_location(raw_location):
 
     result = {"city": None, "state": None, "country": None, "raw": raw}
 
-    # Split by comma
+    # Safety guard: reject strings that look like sentences
     parts = [p.strip() for p in raw.split(",")]
+    first_part_words = set(parts[0].lower().split())
+    if len(parts[0].split()) > 4 or (first_part_words & _SENTENCE_WORDS):
+        return None  # This is a sentence, not a location
 
     if len(parts) >= 3:
         result["city"] = parts[0].title()
-        result["state"] = parts[1].strip()
+        result["state"] = parts[1].strip().title()
         result["country"] = parts[2].strip().title()
     elif len(parts) == 2:
         result["city"] = parts[0].title()
         second = parts[1].strip()
 
-        # Check if second part is a US state abbreviation
-        if second.lower() in US_STATES:
-            result["state"] = US_STATES[second.lower()]
-            result["country"] = "United States"
-        elif len(second) == 2 and second.upper().isalpha():
-            # Could be a state abbreviation
-            if second.lower() in US_STATES:
-                result["state"] = US_STATES[second.lower()]
-                result["country"] = "United States"
-            else:
-                result["state"] = second
+        # Check if second part is a known Indian state abbreviation
+        if second.lower() in INDIAN_STATES:
+            result["state"] = INDIAN_STATES[second.lower()]
+            result["country"] = "India"
         else:
+            # Treat as Indian state full name by default
             result["state"] = second.title()
+            result["country"] = "India"
     elif len(parts) == 1:
+        # Only city — default to India
         result["city"] = parts[0].title()
+        result["country"] = "India"
 
     return result
+
+
 
 
 # ──────────────────────────────────────────────

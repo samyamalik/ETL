@@ -70,8 +70,8 @@ class DocxAdapter(BaseAdapter):
         email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
         record.emails = list(set(re.findall(email_pattern, text)))
 
-        # Extract phone numbers
-        phone_pattern = r'[\+]?[\d\s\-\(\)]{7,15}'
+        # Extract phone numbers with strict boundary guards
+        phone_pattern = r'(?:^|[\s,;:\.])([\+]?[\d\s\-\(\)]{7,15})(?:[\s,;:\.]|$)'
         raw_phones = re.findall(phone_pattern, text)
         record.phones = [p.strip() for p in raw_phones if len(re.sub(r'\D', '', p)) >= 7]
 

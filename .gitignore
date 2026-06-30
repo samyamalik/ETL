@@ -27,3 +27,18 @@ htmlcov/
 
 # Generated test fixture files
 tests/fixtures/edge_*
+
+# Developer Notes & Deliverables
+context.md
+explanation.md
+assignment_explanation.md
+Samya_Malik_samyamalik25@gmail.com_Eightfold.md
+
+# Secrets and Environment Variables
+.env
+.env.*
+
+# Application Data & Debug Outputs
+test_output.txt
+sample_data/
+output_configs/assignment_spec.json

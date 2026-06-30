@@ -13,6 +13,5 @@
   ],
   "include_provenance": false,
   "include_confidence": true,
-  "missing_value_strategy": "null",
-  "output_format": "json"
+  "on_missing": "null"
 }

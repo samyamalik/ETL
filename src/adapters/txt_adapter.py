@@ -57,8 +57,8 @@ class TxtAdapter(BaseAdapter):
         email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
         record.emails = list(set(re.findall(email_pattern, text)))
 
-        # Extract phone numbers
-        phone_pattern = r'[\+]?[\d\s\-\(\)]{7,15}'
+        # Extract phone numbers with strict boundary guards
+        phone_pattern = r'(?:^|[\s,;:\.])([\+]?[\d\s\-\(\)]{7,15})(?:[\s,;:\.]|$)'
         raw_phones = re.findall(phone_pattern, text)
         record.phones = [p.strip() for p in raw_phones if len(re.sub(r'\D', '', p)) >= 7]
 
@@ -100,18 +100,40 @@ class TxtAdapter(BaseAdapter):
                 record.skills = [s.strip() for s in skills if s.strip() and len(s.strip()) < 50]
                 break
 
-        # Location
-        loc_patterns = [
-            r'(?:location|based in|located in|from)[:\s]+([^\n.,]+(?:,\s*[^\n.]+)?)',
-        ]
-        for pattern in loc_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                record.location = match.group(1).strip()
-                break
+        # Location — line-by-line Indian city detection to avoid false matches
+        INDIAN_CITIES = {
+            "mumbai", "delhi", "bengaluru", "bangalore", "hyderabad", "chennai",
+            "kolkata", "pune", "ahmedabad", "jaipur", "lucknow", "kanpur",
+            "nagpur", "indore", "bhopal", "patna", "vadodara", "ghaziabad",
+            "ludhiana", "agra", "nashik", "faridabad", "meerut", "surat",
+            "noida", "gurugram", "gurgaon", "chandigarh", "coimbatore",
+            "kochi", "mangaluru", "mysuru", "mysore", "trichy", "bhubaneswar",
+        }
+        lines = [l.strip() for l in text.split("\n") if l.strip()]
+
+        # Strategy 1: Explicit location label on its own line
+        for line in lines:
+            m = re.match(r'(?:location|based in|located in|address)[:\s]+(.+)', line, re.IGNORECASE)
+            if m:
+                val = m.group(1).strip()
+                if len(val) <= 60:
+                    record.location = val
+                    break
+
+        # Strategy 2: Line that contains a known Indian city (short lines only)
+        if not record.location:
+            for line in lines:
+                if len(line) <= 60:
+                    lower = line.lower()
+                    for city in INDIAN_CITIES:
+                        if city in lower:
+                            record.location = line
+                            break
+                if record.location:
+                    break
 
         # Links
-        url_pattern = r'https?://[^\s<>\"\')\]]*'
+        url_pattern = r'https?://[^\s<>"\')\]]*'
         urls = re.findall(url_pattern, text)
         for url in urls:
             lower = url.lower()

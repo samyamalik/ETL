@@ -1,19 +1,18 @@
-# Core
-pyyaml>=6.0
-phonenumbers>=8.13
-streamlit>=1.35
+# UI Dashboard
+streamlit==1.58.0
 
-# PDF parsing
-pdfplumber>=0.10
+# Pipeline Extractor Dependencies
+pdfplumber==0.11.10
+python-docx==1.2.0
 
-# DOCX parsing
-python-docx>=1.1
+# Normalization & Validation
+phonenumbers==9.0.33
+jsonschema==4.26.0
 
-# HTTP (GitHub API)
-requests>=2.31
-
-# Validation
-jsonschema>=4.20
+# API and Utilities
+requests==2.34.2
+python-dotenv==1.2.2
+PyYAML==6.0.3
 
 # Testing
-pytest>=7.4
+pytest==9.1.1

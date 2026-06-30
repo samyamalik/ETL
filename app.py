@@ -89,7 +89,7 @@ st.markdown("""
 # ─────────────────────────────────────────────
 st.markdown("""
 <div class="hero">
-  <h1>🧠 Multi-Source Candidate Transformer</h1>
+  <h1>Multi-Source Candidate Transformer</h1>
   <p>Upload structured &amp; unstructured candidate data from any source.
      The backend normalises, merges, scores, and produces one clean canonical profile.</p>
 </div>
@@ -125,17 +125,23 @@ with col_right:
         st.caption("Upload resumes or recruiter notes, and optionally provide a GitHub username.")
 
         resume_files = st.file_uploader(
-            "Resume PDF / DOCX / TXT file(s)",
-            type=["pdf", "docx", "txt"],
+            "Resume PDF / DOCX file(s)",
+            type=["pdf", "docx"],
             accept_multiple_files=True,
             key="resume_upload",
+        )
+        txt_files = st.file_uploader(
+            "Recruiter Notes (TXT files)",
+            type=["txt"],
+            accept_multiple_files=True,
+            key="txt_upload",
         )
         github_input = st.text_input(
             "GitHub username or URL",
             placeholder="samyamalik   or   https://github.com/samyamalik",
         )
 
-# ── CENTRE ROW — Custom Config ────────────────
+# ── CENTRE ROW — Custom Config & Run ──────────
 _, cfg_col, _ = st.columns([1, 2, 1])
 with cfg_col:
     with st.container(border=True):
@@ -146,6 +152,7 @@ with cfg_col:
             type=["json"],
             accept_multiple_files=False,
             key="config_upload",
+            label_visibility="collapsed",
         )
         with st.expander("📋 View config format reference"):
             st.code("""{
@@ -160,13 +167,8 @@ with cfg_col:
   "on_missing": "null"
 }""", language="json")
 
-# ─────────────────────────────────────────────
-# RUN BUTTON
-# ─────────────────────────────────────────────
-st.markdown("---")
-btn_col, _ = st.columns([1, 2])
-with btn_col:
-    run_clicked = st.button("🚀  Run Pipeline", use_container_width=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    run_clicked = st.button("🚀  Run Pipeline", use_container_width=True, type="primary")
 
 # ─────────────────────────────────────────────
 # PIPELINE EXECUTION
@@ -175,7 +177,7 @@ if run_clicked:
     sources  = {}
     tmp_files = []
 
-    has_any = csv_files or json_files or resume_files or (github_input and github_input.strip())
+    has_any = csv_files or json_files or resume_files or txt_files or (github_input and github_input.strip())
     if not has_any:
         st.warning("⚠️  Please provide at least one data source before running the pipeline.")
         st.stop()
@@ -203,9 +205,14 @@ if run_clicked:
                 key = "resume_pdf" if "resume_pdf" not in sources else f"resume_pdf_{i}"
             elif ext == ".docx":
                 key = "resume_docx" if "resume_docx" not in sources else f"resume_docx_{i}"
-            else:
-                key = "recruiter_notes" if "recruiter_notes" not in sources else f"recruiter_notes_{i}"
             path = _save_temp(f, ext)
+            sources[key] = path
+            tmp_files.append(path)
+            
+        # Recruiter Notes (TXT)
+        for i, f in enumerate(txt_files or []):
+            key = "recruiter_notes" if "recruiter_notes" not in sources else f"recruiter_notes_{i}"
+            path = _save_temp(f, ".txt")
             sources[key] = path
             tmp_files.append(path)
 

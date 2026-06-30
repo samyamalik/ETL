@@ -207,6 +207,24 @@ def score_profile(profile, source_records):
         weighted_sum += conf * weight
         total_weight += weight
 
+    # ── Update Provenance Entries ──
+    for entry in profile.provenance:
+        if entry.field_path in field_confidences:
+            entry.confidence = field_confidences[entry.field_path]
+        elif "[" in entry.field_path:
+            base_field, idx_str = entry.field_path.split("[", 1)
+            idx = int(idx_str.split("]")[0])
+            if base_field == "emails" and idx < len(profile.emails):
+                entry.confidence = profile.emails[idx].confidence
+            elif base_field == "phones" and idx < len(profile.phones):
+                entry.confidence = profile.phones[idx].confidence
+            elif base_field == "skills" and idx < len(profile.skills):
+                entry.confidence = profile.skills[idx].confidence
+            elif base_field == "experience" and idx < len(profile.experience):
+                entry.confidence = profile.experience[idx].confidence
+            elif base_field == "education" and idx < len(profile.education):
+                entry.confidence = profile.education[idx].confidence
+
     profile.overall_confidence = round(weighted_sum / total_weight, 4) if total_weight > 0 else 0.0
 
     logger.info("scoring", "", f"Overall confidence: {profile.overall_confidence}")

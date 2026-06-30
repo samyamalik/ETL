@@ -78,7 +78,7 @@ class CsvAdapter(BaseAdapter):
         )
 
         # Map common CSV column names to our fields (case-insensitive)
-        mapped = {k.lower().strip(): v.strip() if v else "" for k, v in row.items()}
+        mapped = {k.lower().strip(): v.strip() if v else "" for k, v in row.items() if k is not None}
 
         # Name
         record.full_name = (
