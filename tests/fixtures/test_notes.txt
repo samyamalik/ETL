@@ -1,0 +1,6 @@
+Candidate: John Doe
+Email: john@example.com
+Phone: 555-123-4567
+Skills: Python, JavaScript, React
+Location: Based in San Francisco
+He has 5 years of experience.

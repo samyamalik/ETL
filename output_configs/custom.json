@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "fields": [
+    {"canonical_path": "full_name", "output_name": "candidateName", "normalize": "title_case", "required": true},
+    {"canonical_path": "emails", "output_name": "emailAddresses"},
+    {"canonical_path": "phones", "output_name": "phoneNumbers"},
+    {"canonical_path": "location", "output_name": "candidateLocation"},
+    {"canonical_path": "headline", "output_name": "currentTitle"},
+    {"canonical_path": "years_experience", "output_name": "totalExperience"},
+    {"canonical_path": "skills", "output_name": "technicalSkills"},
+    {"canonical_path": "experience", "output_name": "workHistory"},
+    {"canonical_path": "education", "output_name": "educationHistory"}
+  ],
+  "include_provenance": false,
+  "include_confidence": true,
+  "missing_value_strategy": "null",
+  "output_format": "json"
+}

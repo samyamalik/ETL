@@ -1,0 +1,28 @@
+# Company alias map: alias -> canonical name
+# All keys should be lowercase
+aliases:
+  google llc: Google
+  google inc: Google
+  google inc.: Google
+  alphabet: Google
+  meta platforms: Meta
+  facebook: Meta
+  facebook inc: Meta
+  fb: Meta
+  microsoft corp: Microsoft
+  microsoft corporation: Microsoft
+  msft: Microsoft
+  amazon.com: Amazon
+  amazon inc: Amazon
+  amazon web services: AWS
+  apple inc: Apple
+  apple inc.: Apple
+  netflix inc: Netflix
+  netflix inc.: Netflix
+  twitter: X
+  twitter inc: X
+  ibm corp: IBM
+  ibm corporation: IBM
+  international business machines: IBM
+  salesforce.com: Salesforce
+  salesforce inc: Salesforce

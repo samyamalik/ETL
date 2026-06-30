@@ -1,0 +1,29 @@
+# Python Virtual Environments
+venv/
+env/
+.venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest caches and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MacOS specific files
+.DS_Store
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+
+# Logs and databases
+*.log
+*.sqlite
+
+# Generated test fixture files
+tests/fixtures/edge_*

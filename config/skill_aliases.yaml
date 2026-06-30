@@ -1,0 +1,39 @@
+# Skill alias map: alias -> canonical name
+# All keys should be lowercase
+aliases:
+  js: javascript
+  ts: typescript
+  py: python
+  node: node.js
+  nodejs: node.js
+  "node js": node.js
+  react.js: react
+  reactjs: react
+  vue.js: vue
+  vuejs: vue
+  angular.js: angular
+  angularjs: angular
+  cpp: c++
+  "c sharp": c#
+  csharp: c#
+  golang: go
+  pg: postgresql
+  postgres: postgresql
+  mongo: mongodb
+  k8s: kubernetes
+  tf: terraform
+  aws lambda: lambda
+  ml: machine learning
+  ai: artificial intelligence
+  dl: deep learning
+  nlp: natural language processing
+  cv: computer vision
+  html5: html
+  css3: css
+  sass: scss
+  "ci cd": ci/cd
+  cicd: ci/cd
+  devops: devops
+  rest: rest api
+  restful: rest api
+  graphql api: graphql

@@ -1,0 +1,21 @@
+Recruiter Notes - Priya Sharma
+Date: 2024-03-15
+
+Candidate: Priya Sharma
+Email: priya.sharma@email.com
+Phone: 555-010-1234
+
+Spoke with Priya today. She has about 8 years of experience in software engineering.
+Currently at Google working on cloud infrastructure projects.
+Previously at Facebook (now Meta) working on data pipelines.
+
+Skills: Python, React, AWS, Kubernetes, CI/CD, Machine Learning
+Location: Based in San Francisco, CA
+
+She mentioned interest in principal engineer roles.
+Strong communicator, team lead experience.
+
+GitHub: https://github.com/priyasharma
+LinkedIn: https://linkedin.com/in/priyasharma
+
+Overall impression: Very strong candidate. Recommend for senior/staff level positions.

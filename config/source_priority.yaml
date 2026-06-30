@@ -1,0 +1,18 @@
+# Source priority ranking (1 = highest trust)
+# Used by merge engine to resolve conflicts deterministically
+priority:
+  ats_json: 1
+  recruiter_csv: 2
+  resume_pdf: 3
+  resume_docx: 4
+  github_profile: 5
+  recruiter_notes: 6
+
+# Trust weights for confidence scoring (0.0 to 1.0)
+trust_weights:
+  ats_json: 0.95
+  recruiter_csv: 0.85
+  resume_pdf: 0.75
+  resume_docx: 0.75
+  github_profile: 0.70
+  recruiter_notes: 0.50

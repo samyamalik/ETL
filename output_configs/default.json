@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "fields": [
+    {"canonical_path": "candidate_id", "output_name": "candidate_id"},
+    {"canonical_path": "full_name", "output_name": "full_name"},
+    {"canonical_path": "emails", "output_name": "emails"},
+    {"canonical_path": "phones", "output_name": "phones"},
+    {"canonical_path": "location", "output_name": "location"},
+    {"canonical_path": "links", "output_name": "links"},
+    {"canonical_path": "headline", "output_name": "headline"},
+    {"canonical_path": "years_experience", "output_name": "years_experience"},
+    {"canonical_path": "skills", "output_name": "skills"},
+    {"canonical_path": "experience", "output_name": "experience"},
+    {"canonical_path": "education", "output_name": "education"}
+  ],
+  "include_provenance": true,
+  "include_confidence": true,
+  "missing_value_strategy": "null",
+  "output_format": "json"
+}

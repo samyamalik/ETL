@@ -1,0 +1,161 @@
+"""
+ATS JSON Adapter — extracts candidate data from ATS (Applicant Tracking System) JSON files.
+
+Handles: valid JSON, invalid JSON, missing keys, nested nulls.
+"""
+
+import json
+import os
+from src.adapters.base_adapter import BaseAdapter
+from src.schema.source_record import SourceRecord
+from src.logger import logger
+
+
+class AtsJsonAdapter(BaseAdapter):
+    """Adapter for ATS JSON files."""
+
+    def __init__(self):
+        super().__init__()
+        self.source_name = "ats_json"
+        self.supported_extensions = [".json"]
+
+    def extract(self, input_data):
+        """
+        Extract candidate data from an ATS JSON file.
+
+        Args:
+            input_data: Path to the JSON file.
+
+        Returns:
+            list[SourceRecord]
+        """
+        if not input_data or not os.path.exists(input_data):
+            logger.warning("ingest", self.source_name, f"File not found: {input_data}")
+            return [self._empty_record_with_error(f"File not found: {input_data}")]
+
+        if os.path.getsize(input_data) == 0:
+            logger.warning("ingest", self.source_name, "JSON file is empty")
+            return [self._empty_record_with_error("JSON file is empty")]
+
+        try:
+            with open(input_data, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except json.JSONDecodeError as e:
+            logger.error("ingest", self.source_name, f"Invalid JSON: {str(e)}")
+            return [self._empty_record_with_error(f"Invalid JSON: {str(e)}")]
+        except Exception as e:
+            logger.error("ingest", self.source_name, f"Failed to read file: {str(e)}")
+            return [self._empty_record_with_error(f"Failed to read file: {str(e)}")]
+
+        # Handle both single object and list of candidates
+        if isinstance(data, list):
+            records = []
+            for i, item in enumerate(data):
+                if isinstance(item, dict):
+                    records.append(self._parse_candidate(item))
+                else:
+                    logger.warning("ingest", self.source_name, f"Skipping non-dict item at index {i}")
+            return records if records else [self._empty_record_with_error("No valid candidates in JSON array")]
+        elif isinstance(data, dict):
+            # Could be a single candidate or a wrapper with a "candidates" key
+            if "candidates" in data and isinstance(data["candidates"], list):
+                records = [self._parse_candidate(c) for c in data["candidates"] if isinstance(c, dict)]
+                return records if records else [self._empty_record_with_error("No valid candidates")]
+            else:
+                return [self._parse_candidate(data)]
+        else:
+            return [self._empty_record_with_error("JSON root is not an object or array")]
+
+    def _parse_candidate(self, data):
+        """Parse a single candidate dict into a SourceRecord."""
+        record = SourceRecord(
+            source_name=self.source_name,
+            extraction_method="structured",
+        )
+
+        record.full_name = self._safe_str(data, "full_name") or self._safe_str(data, "name")
+
+        # Emails — could be string or list
+        emails = data.get("emails") or data.get("email")
+        if isinstance(emails, str):
+            record.emails = [emails.strip()] if emails.strip() else []
+        elif isinstance(emails, list):
+            record.emails = [str(e).strip() for e in emails if e]
+        
+        # Phones
+        phones = data.get("phones") or data.get("phone")
+        if isinstance(phones, str):
+            record.phones = [phones.strip()] if phones.strip() else []
+        elif isinstance(phones, list):
+            record.phones = [str(p).strip() for p in phones if p]
+
+        # Location
+        loc = data.get("location")
+        if isinstance(loc, str):
+            record.location = loc
+        elif isinstance(loc, dict):
+            parts = [loc.get("city", ""), loc.get("state", ""), loc.get("country", "")]
+            record.location = ", ".join(p for p in parts if p)
+
+        # Headline
+        record.headline = self._safe_str(data, "headline") or self._safe_str(data, "title")
+
+        # Years experience
+        yoe = data.get("years_experience") or data.get("experience_years")
+        if yoe is not None:
+            try:
+                record.years_experience = float(yoe)
+            except (ValueError, TypeError):
+                record.errors.append(f"Invalid years_experience: {yoe}")
+
+        # Skills
+        skills = data.get("skills") or []
+        if isinstance(skills, list):
+            record.skills = [str(s).strip() for s in skills if s]
+        elif isinstance(skills, str):
+            record.skills = [s.strip() for s in skills.split(",") if s.strip()]
+
+        # Links
+        links = data.get("links") or {}
+        if isinstance(links, dict):
+            record.links = {k: str(v) for k, v in links.items() if v}
+        github = data.get("github") or data.get("github_url")
+        if github:
+            record.links["github"] = str(github)
+
+        # Experience
+        exp_list = data.get("experience") or []
+        if isinstance(exp_list, list):
+            for exp in exp_list:
+                if isinstance(exp, dict):
+                    record.experience.append({
+                        "company": exp.get("company", ""),
+                        "title": exp.get("title", ""),
+                        "start_date": exp.get("start_date"),
+                        "end_date": exp.get("end_date"),
+                        "is_current": exp.get("is_current", False),
+                        "description": exp.get("description", ""),
+                    })
+
+        # Education
+        edu_list = data.get("education") or []
+        if isinstance(edu_list, list):
+            for edu in edu_list:
+                if isinstance(edu, dict):
+                    record.education.append({
+                        "institution": edu.get("institution", ""),
+                        "degree": edu.get("degree", ""),
+                        "field_of_study": edu.get("field_of_study", edu.get("field", "")),
+                        "start_date": edu.get("start_date"),
+                        "end_date": edu.get("end_date"),
+                    })
+
+        logger.debug("ingest", self.source_name, f"Parsed candidate: {record.full_name}")
+        return record
+
+    def _safe_str(self, data, key):
+        """Safely get a string value from a dict, returning None for missing/null."""
+        val = data.get(key)
+        if val is None:
+            return None
+        return str(val).strip() or None

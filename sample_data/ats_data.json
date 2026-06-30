@@ -1,0 +1,61 @@
+{
+  "candidates": [
+    {
+      "full_name": "Priya Sharma",
+      "email": "priya.sharma@email.com",
+      "phones": ["+15550101"],
+      "location": {
+        "city": "San Francisco",
+        "state": "California",
+        "country": "US"
+      },
+      "headline": "Senior Software Engineer",
+      "years_experience": 8,
+      "skills": ["Python", "JavaScript", "React", "Node.js", "AWS", "Docker", "PostgreSQL"],
+      "links": {
+        "github": "https://github.com/priyasharma",
+        "linkedin": "https://linkedin.com/in/priyasharma"
+      },
+      "experience": [
+        {
+          "company": "Google LLC",
+          "title": "Senior Software Engineer",
+          "start_date": "2021-03",
+          "end_date": "Present",
+          "is_current": true,
+          "description": "Leading backend team for cloud infrastructure"
+        },
+        {
+          "company": "Meta Platforms",
+          "title": "Software Engineer",
+          "start_date": "2018-06",
+          "end_date": "2021-02",
+          "description": "Built real-time data pipelines"
+        },
+        {
+          "company": "Amazon Inc",
+          "title": "Junior Developer",
+          "start_date": "2016-01",
+          "end_date": "2018-05",
+          "description": "Worked on AWS Lambda functions"
+        }
+      ],
+      "education": [
+        {
+          "institution": "Stanford University",
+          "degree": "MS",
+          "field_of_study": "Computer Science",
+          "start_date": "2014",
+          "end_date": "2016"
+        },
+        {
+          "institution": "IIT Delhi",
+          "degree": "BTech",
+          "field_of_study": "Computer Science",
+          "start_date": "2010",
+          "end_date": "2014"
+        }
+      ]
+    }
+  ]
+}
