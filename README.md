@@ -2,6 +2,8 @@
 
 A deterministic, explainable, and scalable backend pipeline that extracts candidate information from multiple structured and unstructured sources, merges them into a clean canonical profile, and handles complex edge cases without crashing.
 
+**[🚀 Live Demo](https://etl-candidate-transformer.streamlit.app/)**
+
 ## Features
 
 - **6 Source Adapters** — CSV, ATS JSON, Resume PDF, Resume DOCX, Recruiter Notes TXT, GitHub Profile
