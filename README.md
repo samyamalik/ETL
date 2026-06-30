@@ -12,7 +12,7 @@ A deterministic, explainable, and scalable backend pipeline that extracts candid
 - **Robust Error Handling** — Empty files, malformed JSON, or extra CSV columns degrade gracefully instead of crashing.
 - **Interactive UI** — Streamlit web dashboard for real-time file uploads and pipeline execution.
 
-## Quick Start
+## Quick Start (For MacOS)
 
 ```bash
 # 1. Create virtual environment
@@ -68,7 +68,7 @@ The pipeline's final payload is dynamically driven by a JSON config file.
 |--------|--------|-------------|
 | `include_provenance` | `true/false` | Include/exclude transparency tracking data |
 | `include_confidence` | `true/false` | Include/exclude generated confidence scores |
-| `on_missing` | `"null"`, `"omit"` | How to handle missing data to prevent schema breaking |
+| `on_missing` | `"null"`, `"omit"`, `"error"` | How to handle missing data to prevent schema breaking |
 
 ## Project Structure
 
